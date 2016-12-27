@@ -1,0 +1,99 @@
+#pragma strict
+
+var kittyRigid : Rigidbody2D;
+var kittyAnime : Animator;
+var forceDeplacementX : float;
+private var saut : boolean;
+private var speed : float;
+private var surPlancher : boolean;
+var TexteScore : UI.Text;
+var compteur : int=0;
+var partieTerminee: boolean;
+var spike : Sprite;
+
+function Start () {
+
+	kittyRigid = GetComponent(Rigidbody2D); //Va chercher le body et le donne à la variable
+	kittyAnime = GetComponent(Animator); //Va chercher l'animation et le donne à la variable
+	surPlancher = true; //Initialise la variable en true
+
+}
+
+function Update () {
+
+var auSol = Physics2D.OverlapCircle(transform.position,0.5);
+
+if(Input.GetButtonDown("Jump") && surPlancher){ //si Sonic saute
+
+		saut = true;
+		surPlancher = false;
+	}
+
+
+}
+
+
+
+function FixedUpdate () { //fonction qui update rapidement
+
+	if (partieTerminee==false){
+
+	var deplacementX = Input.GetAxis("Horizontal"); //Switch de bord quand il va de gauche à droite et de droite à gauche
+	
+	kittyAnime.SetFloat("speed", Mathf.Abs(deplacementX)); 
+
+	if(deplacementX<0){ //Flip à gauche quand il va à gauche
+
+		GetComponent(SpriteRenderer).flipX = true;
+		kittyRigid.AddForce(Vector2(-forceDeplacementX,0));
+
+	}
+	else if(deplacementX>0){ //Flip à droite quand il va a droite
+
+		kittyRigid.AddForce(Vector2(forceDeplacementX,0));
+		GetComponent(SpriteRenderer).flipX = false;
+	}
+	else { //Pour le idle animation
+		
+		kittyRigid.velocity.x=0;
+	}
+
+	if(saut){ //Si il saute il monte et fait son animation de saut
+
+		kittyRigid.AddForce(Vector2(0,10),ForceMode2D.Impulse);
+		kittyAnime.SetBool("saut",true);
+		saut = false;
+	}
+}}
+
+function OnCollisionEnter2D(infoCollision:Collision2D) { 
+
+	surPlancher = true;
+	kittyAnime.SetBool("saut",false);
+
+
+if(infoCollision.gameObject.name=="Monnaie1") {
+		compteur += 1;
+        TexteScore.text = "Pointage :" + compteur;
+        infoCollision.gameObject.SetActive(false);
+        yield WaitForSeconds(5);
+        infoCollision.gameObject.SetActive(true);
+}
+
+else if(infoCollision.gameObject.name=="Monnaie5") {
+		compteur += 5;
+        TexteScore.text = "Pointage :" + compteur;
+        infoCollision.gameObject.SetActive(false);
+        yield WaitForSeconds(5);
+        infoCollision.gameObject.SetActive(true);
+}
+
+else if(infoCollision.gameObject.name=="Spike") {
+        	GetComponent(Rigidbody2D).freezeRotation=false;
+            partieTerminee = true;
+            GetComponent(Rigidbody2D).angularVelocity=1250;
+            yield WaitForSeconds(1);
+            Application.LoadLevel(0);
+}
+
+}
